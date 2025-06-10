@@ -66,6 +66,7 @@ def get_answer_with_cache(question: str, user_id: str):
 def chatbot_loop():
     print("Welcome to the semantic cache chatbot. Type 'exit' to quit.")
     while True:
+        print("#####################################################")
         question = input("Enter your question: ").strip()
         if question.lower() == "exit":
             print("Goodbye!")
