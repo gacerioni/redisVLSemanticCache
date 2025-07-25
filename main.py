@@ -1,7 +1,6 @@
 #############################
 # === CONFIGURATION PANEL ===
 DISTANCE_THRESHOLD = 0.3
-REDIS_URL = "redis://localhost:6379"
 VECTOR_MODEL = "redis/langcache-embed-v1"
 CACHE_NAME = "llmcache"
 user_id = "user_gabs_123"
@@ -9,35 +8,36 @@ user_id = "user_gabs_123"
 
 from dotenv import load_dotenv
 import os
-import getpass
 import time
 import numpy as np
 
 from redisvl.extensions.cache.llm import SemanticCache
-from redisvl.utils .vectorize import HFTextVectorizer
+from redisvl.utils.vectorize import HFTextVectorizer
 from redisvl.query.filter import Tag
-
 from openai import OpenAI
 
+# Load environment variables
 load_dotenv()
-
 
 os.environ["TOKENIZERS_PARALLELISM"] = "False"
 
+# Get API key from env
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise EnvironmentError("OPENAI_API_KEY not found in environment variables. Please set it in a .env file.")
+
+# Get Redis URL from env (fallback to default localhost if not provided)
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 
 client = OpenAI(api_key=api_key)
 
 def ask_openai(question: str) -> str:
     response = client.completions.create(
-      model="gpt-3.5-turbo-instruct",
-      prompt=question,
-      max_tokens=200
+        model="gpt-3.5-turbo-instruct",
+        prompt=question,
+        max_tokens=200
     )
     return response.choices[0].text.strip()
-
 
 llmcache = SemanticCache(
     name=CACHE_NAME,
@@ -48,7 +48,6 @@ llmcache = SemanticCache(
     overwrite=True
 )
 
-# Performance-aware QA function with per-user caching, returning response time and cache status
 def get_answer_with_cache(question: str, user_id: str):
     filter_by_user = Tag("user_id") == user_id
     start = time.time()
@@ -77,7 +76,6 @@ def chatbot_loop():
         print(f"Response time: {duration:.4f}s\n")
 
 def main():
-    # Clear the Redis index to ensure the cache starts empty for the demo
     llmcache.clear()
     chatbot_loop()
 
